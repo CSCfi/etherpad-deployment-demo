@@ -1,0 +1,4 @@
+---
+- include: build-heat-stack.yml
+- include: configure-galera.yml
+- include: configure-etherpad.yml

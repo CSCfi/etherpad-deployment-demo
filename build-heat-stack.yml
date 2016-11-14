@@ -1,0 +1,12 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Build a Heat stack for Etherpad
+      register: stack_create
+      os_stack:
+        name: "etherpad-stack"
+        state: present
+        template: "files/etherpad-heat-stack.yml"
+        environment:
+          - "{{ heat_environment_file}}"

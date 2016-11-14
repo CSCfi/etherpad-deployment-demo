@@ -1,0 +1,10 @@
+# This is an example parameter file for Heat. The minimum set of deployment
+# specific parameters to set for Heat are documented here.
+parameter_defaults:
+  ssh_key_name:
+  etherpad_node_flavor:
+  etherpad_node_image:
+  etherpad_node_allow_ssh_cidr:
+  galera_node_flavor:
+  galera_node_image:
+  etherpad_node_network:

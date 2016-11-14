@@ -1,0 +1,5 @@
+*.swp
+*.swo
+*.retry
+*.idea
+my-heat-params.yml

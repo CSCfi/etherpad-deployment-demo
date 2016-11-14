@@ -1,0 +1,138 @@
+heat_template_version: 2015-10-15
+
+description: >
+  Build machines for a deployment of Etherpad with a separate database backend
+  on OpenStack.
+
+parameters:
+  ssh_key_name:
+    description: The name of the SSH key in OpenStack to add to hosts.
+    type: string
+  etherpad_node_flavor:
+    description: The flavor to use for the VM running Etherpad.
+    type: string
+  etherpad_node_image:
+    description: The image to use for the VM running Etherpad.
+    type: string
+  etherpad_node_network:
+    description: The network to use for the VM running Etherpad.
+    type: string
+  etherpad_node_allow_ssh_cidr:
+    description: The CIDR where SSH is allowed to the frontend from.
+    type: string
+  galera_node_flavor:
+    description: The flavor to use for Galera nodes.
+    type: string
+  galera_node_image:
+    description: The image to use for Galera nodes.
+    type: string
+  backend_network_cidr:
+    type: string
+    label: Backend network CIDR
+    description: The CIDR for the backend network.
+    default: '10.1.1.0/24'
+  floating_ip_pool:
+    type: string
+    label: Floating IP pool
+    description: The pool from which floating IPs should be reserved.
+    default: 'public'
+
+resources:
+  backend_network:
+    type: OS::Neutron::Net
+
+  backend_subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      network_id: { get_resource: backend_network }
+      cidr: { get_param: backend_network_cidr }
+      dns_nameservers: [ '8.8.8.8', '8.8.4.4' ]
+
+  backend_secgroup:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+        - protocol: tcp
+        - protocol: tcp
+          remote_ip_prefix: { get_param: backend_network_cidr }
+          port_range_min: 3306
+          port_range_max: 3306
+        - protocol: tcp
+          remote_ip_prefix: { get_param: backend_network_cidr }
+          port_range_min: 22
+          port_range_max: 22
+
+  frontend_secgroup:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      rules:
+        - protocol: tcp
+          remote_ip_prefix: { get_param: etherpad_node_allow_ssh_cidr }
+          port_range_min: 22
+          port_range_max: 22
+
+  etherpad_public_ip:
+    type: OS::Nova::FloatingIP
+    properties:
+      pool: { get_param: floating_ip_pool }
+
+  etherpad_node:
+    type: OS::Nova::Server
+    properties:
+      flavor: { get_param: etherpad_node_flavor }
+      image: { get_param: etherpad_node_image }
+      key_name: { get_param: ssh_key_name }
+      security_groups:
+        - { get_resource: frontend_secgroup }
+      user_data_format: RAW
+      user_data: |
+        #!/bin/bash
+        for iface in $(ip -o link | cut -d: -f2 | tr -d ' ' | grep -v lo); do
+          egrep -q "^iface\s+$iface" /etc/network/interfaces.d/50-cloud-init.cfg
+          if [ $? -ne 0 ]; then
+            echo -e "auto $iface\niface $iface inet dhcp\n" >> /etc/network/interfaces.d/$iface.cfg
+            ifup $iface
+          fi
+        done
+      networks:
+        - network: { get_param: etherpad_node_network }
+        - network: { get_resource: backend_network }
+
+  etherpad_floating_ip_association:
+    type: OS::Nova::FloatingIPAssociation
+    properties:
+      floating_ip: { get_resource: etherpad_public_ip }
+      server_id: { get_resource: etherpad_node }
+
+  galera_node1:
+    type: OS::Nova::Server
+    properties:
+      flavor: { get_param: galera_node_flavor }
+      image: { get_param: galera_node_image }
+      key_name: { get_param: ssh_key_name }
+      security_groups:
+        - { get_resource: backend_secgroup }
+      networks:
+        - network: { get_resource: backend_network }
+
+  galera_node2:
+    type: OS::Nova::Server
+    properties:
+      flavor: { get_param: galera_node_flavor }
+      image: { get_param: galera_node_image }
+      key_name: { get_param: ssh_key_name }
+      security_groups:
+        - { get_resource: backend_secgroup }
+      networks:
+        - network: { get_resource: backend_network }
+
+  galera_node3:
+    type: OS::Nova::Server
+    properties:
+      flavor: { get_param: galera_node_flavor }
+      image: { get_param: galera_node_image }
+      key_name: { get_param: ssh_key_name }
+      security_groups:
+        - { get_resource: backend_secgroup }
+      networks:
+        - network: { get_resource: backend_network }

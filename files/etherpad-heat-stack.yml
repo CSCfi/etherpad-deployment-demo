@@ -14,7 +14,7 @@ parameters:
   etherpad_node_image:
     description: The image to use for the VM running Etherpad.
     type: string
-  etherpad_node_network:
+  etherpad_network:
     description: The network to use for the VM running Etherpad.
     type: string
   etherpad_node_allow_ssh_cidr:
@@ -26,47 +26,36 @@ parameters:
   galera_node_image:
     description: The image to use for Galera nodes.
     type: string
-  backend_network_cidr:
-    type: string
-    label: Backend network CIDR
-    description: The CIDR for the backend network.
-    default: '10.1.1.0/24'
   floating_ip_pool:
     type: string
     label: Floating IP pool
     description: The pool from which floating IPs should be reserved.
     default: 'public'
+  etherpad_network_cidr:
+    type: string
+    description: The CIDR of the internal network for the instances
+    default: '192.168.1.0/24'
 
 resources:
-  backend_network:
-    type: OS::Neutron::Net
-    properties:
-      name: etherpad_backend_network
-
-  backend_subnet:
-    type: OS::Neutron::Subnet
-    properties:
-      network_id: { get_resource: backend_network }
-      cidr: { get_param: backend_network_cidr }
-      dns_nameservers: [ '8.8.8.8', '8.8.4.4' ]
-
   backend_secgroup:
     type: OS::Neutron::SecurityGroup
     properties:
+      name: etherpad_backend_secgroup
       rules:
         - protocol: tcp
         - protocol: tcp
-          remote_ip_prefix: { get_param: backend_network_cidr }
+          remote_ip_prefix: { get_param: etherpad_network_cidr }
           port_range_min: 3306
           port_range_max: 3306
         - protocol: tcp
-          remote_ip_prefix: { get_param: backend_network_cidr }
+          remote_ip_prefix: { get_param: etherpad_network_cidr }
           port_range_min: 22
           port_range_max: 22
 
   frontend_secgroup:
     type: OS::Neutron::SecurityGroup
     properties:
+      name: etherpad_frontend_secgroup
       rules:
         - protocol: tcp
           remote_ip_prefix: { get_param: etherpad_node_allow_ssh_cidr }
@@ -87,19 +76,8 @@ resources:
       key_name: { get_param: ssh_key_name }
       security_groups:
         - { get_resource: frontend_secgroup }
-      user_data_format: RAW
-      user_data: |
-        #!/bin/bash
-        for iface in $(ip -o link | cut -d: -f2 | tr -d ' ' | grep -v lo); do
-          egrep -q "^iface\s+$iface" /etc/network/interfaces.d/50-cloud-init.cfg
-          if [ $? -ne 0 ]; then
-            echo -e "auto $iface\niface $iface inet dhcp\n" >> /etc/network/interfaces.d/$iface.cfg
-            ifup $iface
-          fi
-        done
       networks:
-        - network: { get_param: etherpad_node_network }
-        - network: { get_resource: backend_network }
+        - network: { get_param: etherpad_network }
       metadata: { 'ansible_group': 'etherpad' }
 
   etherpad_floating_ip_association:
@@ -122,7 +100,7 @@ resources:
           security_groups:
             - { get_resource: backend_secgroup }
           networks:
-            - network: { get_resource: backend_network }
+            - network: { get_param: etherpad_network }
           metadata: { 'ansible_group': 'galera' }
 
 outputs:

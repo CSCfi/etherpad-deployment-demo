@@ -7,4 +7,5 @@ parameter_defaults:
   etherpad_node_allow_ssh_cidr:
   galera_node_flavor:
   galera_node_image:
-  etherpad_node_network:
+  etherpad_network:
+  etherpad_network_cidr:

@@ -40,6 +40,8 @@ parameters:
 resources:
   backend_network:
     type: OS::Neutron::Net
+    properties:
+      name: etherpad_backend_network
 
   backend_subnet:
     type: OS::Neutron::Subnet
@@ -79,6 +81,7 @@ resources:
   etherpad_node:
     type: OS::Nova::Server
     properties:
+      name: etherpad_node
       flavor: { get_param: etherpad_node_flavor }
       image: { get_param: etherpad_node_image }
       key_name: { get_param: ssh_key_name }
@@ -97,6 +100,7 @@ resources:
       networks:
         - network: { get_param: etherpad_node_network }
         - network: { get_resource: backend_network }
+      metadata: { 'ansible_group': 'etherpad' }
 
   etherpad_floating_ip_association:
     type: OS::Nova::FloatingIPAssociation
@@ -104,35 +108,27 @@ resources:
       floating_ip: { get_resource: etherpad_public_ip }
       server_id: { get_resource: etherpad_node }
 
-  galera_node1:
-    type: OS::Nova::Server
+  galera_nodes:
+    type: OS::Heat::ResourceGroup
     properties:
-      flavor: { get_param: galera_node_flavor }
-      image: { get_param: galera_node_image }
-      key_name: { get_param: ssh_key_name }
-      security_groups:
-        - { get_resource: backend_secgroup }
-      networks:
-        - network: { get_resource: backend_network }
+      count: 3
+      resource_def:
+        type: OS::Nova::Server
+        properties:
+          name: galera_node%index%
+          flavor: { get_param: galera_node_flavor }
+          image: { get_param: galera_node_image }
+          key_name: { get_param: ssh_key_name }
+          security_groups:
+            - { get_resource: backend_secgroup }
+          networks:
+            - network: { get_resource: backend_network }
+          metadata: { 'ansible_group': 'galera' }
 
-  galera_node2:
-    type: OS::Nova::Server
-    properties:
-      flavor: { get_param: galera_node_flavor }
-      image: { get_param: galera_node_image }
-      key_name: { get_param: ssh_key_name }
-      security_groups:
-        - { get_resource: backend_secgroup }
-      networks:
-        - network: { get_resource: backend_network }
-
-  galera_node3:
-    type: OS::Nova::Server
-    properties:
-      flavor: { get_param: galera_node_flavor }
-      image: { get_param: galera_node_image }
-      key_name: { get_param: ssh_key_name }
-      security_groups:
-        - { get_resource: backend_secgroup }
-      networks:
-        - network: { get_resource: backend_network }
+outputs:
+  etherpad_node:
+    description: The Etherpad node
+    value: { get_attr: [etherpad_node, show] }
+  galera_nodes_group:
+    description: The group of Galera nodes
+    value: { get_attr: [galera_nodes, show] }

@@ -3,10 +3,40 @@
   gather_facts: no
   tasks:
     - name: Build a Heat stack for Etherpad
-      register: stack_create
+      register: heat_stack
       os_stack:
         name: "etherpad-stack"
         state: present
         template: "files/etherpad-heat-stack.yml"
         environment:
           - "{{ heat_environment_file}}"
+
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  tasks:
+    - name: Add Galera nodes to inventory
+      add_host:
+        name: "{{ item.name }}"
+        groups: "{{ item.metadata.ansible_group }}"
+        ansible_ssh_host: "{{ item.addresses['etherpad_backend_network'][0].addr }}"
+        ansible_ssh_user: "{{ vm_user_account }}"
+      with_items:
+        - "{{ heat_stack.stack.outputs[0].output_value }}"
+        - "{{ heat_stack.stack.outputs[1].output_value }}"
+      when: item.addresses|length == 1
+
+- hosts: localhost
+  gather_facts: no
+  connection: local
+  tasks:
+    - name: Add Etherpad frontend node to inventory
+      add_host:
+        name: "{{ item.name }}"
+        groups: "{{ item.metadata.ansible_group }}"
+        ansible_ssh_host: "{{ item.addresses[public_network_name][1].addr }}"
+        ansible_ssh_user: "{{ vm_user_account }}"
+      with_items:
+        - "{{ heat_stack.stack.outputs[0].output_value }}"
+        - "{{ heat_stack.stack.outputs[1].output_value }}"
+      when: item.addresses|length == 2

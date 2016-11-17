@@ -1,0 +1,37 @@
+---
+- name: Install dependencies
+  become: yes
+  apt:
+    name:
+      - gzip
+      - git
+      - curl
+      - python
+      - libssl-dev
+      - pkg-config
+      - build-essential
+      - mysql-client
+      - python-mysqldb
+      - screen
+    state: present
+
+- name: Create a database for Etherpad
+  mysql_db:
+    login_host: "127.0.0.1"
+    login_user: "root"
+    login_password: "{{ mysql_password }}"
+    name: "etherpad"
+    state: present
+
+- name: Clone Etherpad Git repo
+  git:
+    repo: https://github.com/ether/etherpad-lite.git
+    dest: "{{ etherpad_clone_dir }}"
+
+- name: Copy configuration file for Etherpad
+  template: src="settings.json" dest="{{ etherpad_clone_dir }}/settings.json"
+
+- name: Launch Etherpad
+  command: "screen -d -m bin/run.sh -s settings.json"
+  args:
+    chdir: "{{ etherpad_clone_dir }}"

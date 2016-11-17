@@ -12,3 +12,10 @@
           address: "{{ hostvars[groups['galera'][1]]['ansible_ssh_host'] }}"
         - name: "{{ hostvars[groups['galera'][2]]['inventory_hostname'] }}"
           address: "{{ hostvars[groups['galera'][2]]['ansible_ssh_host'] }}"
+    - ansible-role-nodejs
+
+- hosts: etherpad
+  remote_user: "{{ vm_user_account }}"
+  roles:
+    - role: etherpad
+      mysql_password: "{{ lookup('password', 'credentials/mysql_pw length=15') }}"

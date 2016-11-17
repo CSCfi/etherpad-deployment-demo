@@ -13,7 +13,6 @@
   roles:
     - role: galera-cluster-node
       bootstrap: yes
-      mysql_root_client_ip: "{{ hostvars[groups['etherpad'][0]]['ansible_default_ipv4']['address'] }}"
       mysql_password: "{{ lookup('password', 'credentials/mysql_pw length=15') }}"
       replication_password: "{{ lookup('password', 'credentials/replication_pw length=15') }}"
 
@@ -25,3 +24,13 @@
       bootstrap_host_ip: "{{ hostvars[groups['galera'][0]]['ansible_ssh_host'] }}"
       mysql_password: "{{ lookup('password', 'credentials/mysql_pw length=15') }}"
       replication_password: "{{ lookup('password', 'credentials/replication_pw length=15') }}"
+
+- hosts: galera[0]
+  become: yes
+  vars:
+    mysql_root_client_ip: "{{ hostvars[groups['etherpad'][0]]['ansible_default_ipv4']['address'] }}"
+    mysql_password: "{{ lookup('password', 'credentials/mysql_pw length=15') }}"
+  tasks:
+    - name: Grant access from specified IP to all DBs
+      command: >
+        docker exec -t galera_node0 mysql -e "GRANT ALL ON *.* TO root@'{{ mysql_root_client_ip }}' IDENTIFIED BY '{{ mysql_password }}';"

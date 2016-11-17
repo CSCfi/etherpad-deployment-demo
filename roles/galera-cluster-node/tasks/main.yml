@@ -32,8 +32,3 @@
   args:
     creates: "/root/container_started"
   when: bootstrap == False
-
-- name: Grant access from specified IP to all DBs
-  command: >
-    docker exec -t galera_node0 mysql -e "GRANT ALL ON *.* TO root@'{{ mysql_root_client_ip }}' IDENTIFIED BY '{{ mysql_password }}';"
-  when: bootstrap == True

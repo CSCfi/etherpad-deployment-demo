@@ -6,3 +6,7 @@
   scm: git
   path: roles
   name: ansible-role-pip
+
+- src: https://github.com/geerlingguy/ansible-role-nodejs.git
+  scm: git
+  path: roles

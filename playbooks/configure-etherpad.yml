@@ -1,0 +1,14 @@
+---
+- hosts: etherpad
+  become: yes
+  roles:
+    - ansible-role-pip
+    - ansible-role-docker
+    - role: etherpad-galera-haproxy
+      nodes:
+        - name: "{{ hostvars[groups['galera'][0]]['inventory_hostname'] }}"
+          address: "{{ hostvars[groups['galera'][0]]['ansible_ssh_host'] }}"
+        - name: "{{ hostvars[groups['galera'][1]]['inventory_hostname'] }}"
+          address: "{{ hostvars[groups['galera'][1]]['ansible_ssh_host'] }}"
+        - name: "{{ hostvars[groups['galera'][2]]['inventory_hostname'] }}"
+          address: "{{ hostvars[groups['galera'][2]]['ansible_ssh_host'] }}"

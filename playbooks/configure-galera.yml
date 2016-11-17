@@ -1,0 +1,27 @@
+---
+- hosts: etherpad
+  gather_facts: yes
+
+- hosts: galera
+  become: yes
+  roles:
+    - ansible-role-pip
+    - ansible-role-docker
+
+- hosts: galera[0]
+  become: yes
+  roles:
+    - role: galera-cluster-node
+      bootstrap: yes
+      mysql_root_client_ip: "{{ hostvars[groups['etherpad'][0]]['ansible_default_ipv4']['address'] }}"
+      mysql_password: "{{ lookup('password', 'credentials/mysql_pw length=15') }}"
+      replication_password: "{{ lookup('password', 'credentials/replication_pw length=15') }}"
+
+- hosts: galera:!galera[0]
+  become: yes
+  roles:
+    - role: galera-cluster-node
+      bootstrap: no
+      bootstrap_host_ip: "{{ hostvars[groups['galera'][0]]['ansible_ssh_host'] }}"
+      mysql_password: "{{ lookup('password', 'credentials/mysql_pw length=15') }}"
+      replication_password: "{{ lookup('password', 'credentials/replication_pw length=15') }}"

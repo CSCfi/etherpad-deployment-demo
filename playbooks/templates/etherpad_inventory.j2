@@ -1,0 +1,7 @@
+[etherpad]
+etherpad_node ansible_ssh_host={{ hostvars['etherpad_node']['ansible_ssh_host'] }}
+
+[galera]
+{% for node in groups['galera'] %}
+{{ node }} ansible_ssh_host={{ hostvars[node]['ansible_ssh_host'] }}
+{% endfor %}

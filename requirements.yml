@@ -1,0 +1,8 @@
+- src: https://github.com/dochang/ansible-role-docker.git
+  scm: git
+  path: roles
+
+- src: https://github.com/futurice/ansible-pip.git
+  scm: git
+  path: roles
+  name: ansible-role-pip

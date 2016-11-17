@@ -1,0 +1,14 @@
+---
+- name: Copy Dockerfile
+  copy: src=Dockerfile dest=/tmp/Dockerfile
+
+- name: Copy haproxy.cfg
+  template: src=haproxy.cfg dest=/tmp/haproxy.cfg
+
+- name: Build Docker image
+  shell: "docker build -t etherpad-galera-haproxy /tmp"
+
+- name: Run Docker image
+  shell: "docker run -d --name db-loadbalancer --net=host etherpad-galera-haproxy && touch /root/haproxy_started"
+  args:
+    creates: "/root/haproxy_started"

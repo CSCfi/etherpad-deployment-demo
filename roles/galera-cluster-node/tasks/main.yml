@@ -1,0 +1,39 @@
+---
+- name: Create a file system on additional disk (if available)
+  filesystem:
+    dev: "/dev/{{ additional_disk_dev_name }}"
+    fstype: "{{ additional_disk_fstype }}"
+  when: ansible_devices[additional_disk_dev_name] is defined
+
+- name: Mount filesystem on additional disk to Docker volume dir
+  mount:
+    name: "{{ docker_volume_dir }}"
+    src: "/dev/{{ additional_disk_dev_name }}"
+    fstype: "{{ additional_disk_fstype }}"
+    state: mounted
+  when: ansible_devices[additional_disk_dev_name] is defined
+
+- name: Copy script for launching container (first node)
+  template: src="launch-first-node.sh" dest="/tmp/launch-first-node.sh"
+  when: bootstrap == True
+
+- name: Copy script for launching container
+  template: src="launch-node.sh" dest="/tmp/launch-node.sh"
+  when: bootstrap == False
+
+- name: Start first Galera cluster node
+  command: "bash /tmp/launch-first-node.sh"
+  args:
+    creates: "/root/container_started"
+  when: bootstrap == True
+
+- name: Start additional Galera cluster node
+  command: "bash /tmp/launch-node.sh"
+  args:
+    creates: "/root/container_started"
+  when: bootstrap == False
+
+- name: Grant access from specified IP to all DBs
+  command: >
+    docker exec -t galera_node0 mysql -e "GRANT ALL ON *.* TO root@'{{ mysql_root_client_ip }}' IDENTIFIED BY '{{ mysql_password }}';"
+  when: bootstrap == True

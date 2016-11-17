@@ -3,3 +3,5 @@
 *.retry
 *.idea
 my-heat-params.yml
+roles/ansible-role-*
+credentials/

@@ -32,6 +32,6 @@
   template: src="settings.json" dest="{{ etherpad_clone_dir }}/settings.json"
 
 - name: Launch Etherpad
-  command: "screen -d -m bin/run.sh -s settings.json"
+  shell: "screen -d -m bin/run.sh -s settings.json && sleep 1"
   args:
     chdir: "{{ etherpad_clone_dir }}"

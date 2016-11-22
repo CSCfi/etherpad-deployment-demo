@@ -51,3 +51,22 @@
   tasks:
     - name: Generate an inventory file
       template: src=templates/etherpad_inventory.j2 dest=../etherpad_inventory
+
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Wait for the Etherpad frontend node to become accessible
+      wait_for:
+        host: "{{ hostvars[groups['etherpad'][0]]['ansible_ssh_host'] }}"
+        port: 22
+        state: started
+
+- hosts: galera
+  gather_facts: no
+  tasks:
+    - name: Wait for the Galera cluster nodes to become accessible
+      wait_for:
+        host: "{{ ansible_ssh_host }}"
+        port: 22
+        state: started
+      delegate_to: etherpad_node

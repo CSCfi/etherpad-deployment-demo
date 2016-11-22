@@ -1,6 +1,8 @@
 ---
 - hosts: localhost
   gather_facts: no
+  vars:
+    - heat_environment_file: "my-heat-params.yml"
   tasks:
     - name: Build a Heat stack for Etherpad
       register: heat_stack

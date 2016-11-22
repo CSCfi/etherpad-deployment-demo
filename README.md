@@ -4,6 +4,9 @@
 
 1. [Overview](#overview)
 2. [Requirements](#requirements)
+    * [Software](#software)
+    * [Cloud environment](#cloud-environment)
+    * [Virtual machine images](#virtual-machine-images)
 3. [Usage](#usage)
 4. [Technical details](#technical-details)
     * [Tricks used](#tricks-used)
@@ -22,6 +25,8 @@ chapter below.**
 
 ## Requirements
 
+### Software
+
 * Ansible >= 2.2
 * shade >= 1.8.0
 
@@ -35,10 +40,35 @@ The easiest way to install it is using pip:
 $ pip install shade
 ```
 
-In addition to the software listed, you will also need access to an OpenStack
-cloud. The project you use for deployment needs to have a network and a router
-in place. If floating IPs are available for your project then this should
-already be the case.
+### Cloud environment
+
+You will also need access to an OpenStack cloud. The project you use for
+deployment needs to have a network and a router in place. If floating IPs are
+available for your project then this should already be the case.
+
+The OpenStack installation needs to have at least Heat and Neutron in addition
+to Nova. The version of the Heat template used here is for Liberty. If you want
+to run against an older version of OpenStack, you will need to modify the
+template version. It is not guaranteed that the template will work against
+older versions of OpenStack. Contact your OpenStack operator's support if you
+are unsure whether the cloud fulfills these requirements.
+
+Make sure the project you use for the stack has sufficient quota. You will need
+sufficient quota for these additional resources on top of whatever you already
+have running in the project:
+
+  * Four virtual machines (the exact quota requirement depends on the flavors)
+  * One floating IP
+  * Two security groups and the handful of rules in those security groups
+
+### Virtual machine images
+
+The database backend deployment has been tested to work with CentOS 7 and
+Ubuntu 16.04 images.
+
+The Etherpad frontend has been tested to work with Ubuntu 16.04. It should also
+work on CentOS 7, but due to a bug in the node.js role it does not work with
+that operating system at the time of this writing.
 
 ## Usage
 
@@ -67,7 +97,7 @@ example Heat parameter file to your current working directory:
 
 ```bash
 $ cd etherpad-deployment-demo
-$ cp files/example-heat-params.yml my-heat-params.yml
+$ cp files/example-heat-params.yml playbooks/my-heat-params.yml
 ```
 
 Edit the file with your favorite editor and fill in all the variables. You can
@@ -75,19 +105,28 @@ find documentation about the variables in the Heat template under
 `files/etherpad-heat-stack.yml`.
 
 Once you have completed the steps above, you are ready to spin up the stack in
-OpenStack. You will need to specify the location of the Heat parameter file you
-filled in (it's safest to use the absolute path) and the name of the network
-you filled in in your Heat parameters:
+OpenStack. You will need to specify the name of the network you filled in in
+your Heat parameters:
 
 ```bash
 $ ansible-playbook site.yml \
-  -e "heat_environment_file=<your heat parameter file> \
-      etherpad_network_name=<the openstack network shared by instances>"
+  -e "etherpad_network_name=<the openstack network shared by instances>"
 ```
 
 The default user account name used to log in to virtual machines is
 "cloud-user". If the images you are using have a different default user account
 name, then you will need to also set the `vm_user_account` variable.
+
+You can find out the public IP address of the application after the playbook
+run has finished by looking at the automatically generated `etherpad_inventory`
+file. The public IP is the value of `ansible_ssh_host` for `etherpad_node`:
+
+```bash
+$ cat etherpad_inventory
+```
+
+Once the playbook run finishes, you can access the deployed application by
+pointing your browser to its public IP address.
 
 ## Technical details
 

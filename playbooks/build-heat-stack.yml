@@ -48,4 +48,4 @@
   connection: local
   tasks:
     - name: Generate an inventory file
-      template: src=templates/etherpad_inventory.j2 dest=/tmp/etherpad_inventory
+      template: src=templates/etherpad_inventory.j2 dest=../etherpad_inventory

@@ -1,6 +1,16 @@
 ---
 - hosts: etherpad
   become: yes
+  tasks:
+    - name: Install ansible-role-pip dependencies
+      package:
+        name:
+          - wget
+          - python3
+          - python-is-python3
+
+- hosts: etherpad
+  become: yes
   roles:
     - ansible-role-pip
     - ansible-role-docker

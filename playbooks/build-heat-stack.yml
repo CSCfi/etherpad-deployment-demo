@@ -23,7 +23,6 @@
         groups: "{{ item.metadata.ansible_group }}"
         ansible_ssh_host: "{{ item.addresses[etherpad_network_name][0].addr }}"
         ansible_ssh_user: "{{ vm_user_account }}"
-      no_log: yes
       with_items:
         - "{{ heat_stack.stack.outputs[0].output_value }}"
         - "{{ heat_stack.stack.outputs[1].output_value }}"
@@ -39,7 +38,6 @@
         groups: "{{ item.metadata.ansible_group }}"
         ansible_ssh_host: "{{ item.addresses[etherpad_network_name][1].addr }}"
         ansible_ssh_user: "{{ vm_user_account }}"
-      no_log: yes
       with_items:
         - "{{ heat_stack.stack.outputs[0].output_value }}"
         - "{{ heat_stack.stack.outputs[1].output_value }}"

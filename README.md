@@ -79,7 +79,7 @@ later in this text.
 Install the third party Ansible roles used:
 
 ```bash
-$ ansible-galaxy -r requirements.yml install
+$ ansible-galaxy install -r requirements.yml
 ```
 
 You will need to get an openrc file from OpenStack so that Ansible can interact

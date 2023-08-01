@@ -4,6 +4,16 @@
 
 - hosts: galera
   become: yes
+  tasks:
+    - name: Install ansible-role-pip dependencies
+      package:
+        name:
+          - wget
+          - python3
+          - python-is-python3
+
+- hosts: galera
+  become: yes
   roles:
     - ansible-role-pip
     - ansible-role-docker

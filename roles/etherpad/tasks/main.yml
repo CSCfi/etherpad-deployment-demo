@@ -6,12 +6,13 @@
       - gzip
       - git
       - curl
-      - python
+      - python3
+      - python-is-python3
       - libssl-dev
       - pkg-config
       - build-essential
       - mysql-client
-      - python-mysqldb
+      - python3-mysqldb
       - screen
     state: present
 

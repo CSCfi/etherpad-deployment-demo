@@ -1,3 +1,3 @@
 ---
-vm_user_account: "cloud-user"
+vm_user_account: "ubuntu"
 etherpad_network_name: "set me to your network name"
